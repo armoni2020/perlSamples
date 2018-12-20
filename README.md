@@ -6,3 +6,6 @@ takes a cleaned (by another script) mongodb log and aggregates "Find" queries by
 
 # soaprequest
 sends a series of soap requests using an input file as parameters
+
+$ convertDrupal
+strips away headers and footers, and leaves page content for given directory ... resulting files to be ingested by Drupal
