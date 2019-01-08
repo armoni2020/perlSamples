@@ -5,7 +5,15 @@ use HTTP::Request;
 
 local $/;
 
-#names have been changed to remove reference to actual data
+#variable names and urls have been changed to remove reference to actual data
+
+
+#########################################################
+# Takes in a csv of data to be passed to SOAP request	#
+# Calls a SOAP service for each line in the CSV		#
+# prints response to console for each request (can be 	#
+# easily modified to use outfile instead)		#
+#########################################################
 
 my $filename = "images.csv";
 
@@ -48,7 +56,7 @@ foreach my $line (@lines) {
 	</soapenv:Body>
 	</soapenv:Envelope>";
 
-	my $userAgent = LWP::UserAgent->new(ssl_opts => { verify_hostname => 0});
+	my $userAgent = LWP::UserAgent->new(ssl_opts => { verify_hostname => 0});	#turn off hostname varification to deal with https - low risk since running inside firewall
 	$userAgent->agent('Apache-HttpClient/4.1.1 (java 1.5)');
 	my $request = HTTP::Request->new(POST => 'https://127.0.0.1:1234/project/sca/projectWSExport');
 	$request->header(SOAPAction => '""');
@@ -70,7 +78,7 @@ foreach my $line (@lines) {
 
 }
 use POSIX qw(strftime);
-print strftime "%Y-%m-%d %H:%M:%S", localtime $^T;
+print strftime "%Y-%m-%d %H:%M:%S", localtime $^T;	#quick and dirty check to determine total runtime
 
 exit 0;
 
