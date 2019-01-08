@@ -6,8 +6,15 @@ use JSON::Repair 'repair_json';
 
 local $/;
 
-my $filename = "input.txt";
-my $outputFilename = "output.txt";
+
+#################################################
+# Takes in a prepared file from a mongodb log	#
+# parses input file and discovers query shapes	#
+# creates output file for use in aggregation	#
+#################################################
+
+my $filename = "input.txt";		#file created by another script
+my $outputFilename = "output.txt";	#output file to be used by aggregation function
 
 open(FILE, $filename) or die "Can't open $filename: $!";  #create a filehandle called FILE and connect to the file.
 my $string = <FILE>;  #read the entire file into an array in memory.
@@ -28,12 +35,14 @@ foreach my $line (@lines) {
 	if ($line =~ /(\d*)ms$/) {
 		my $time = $1;
 
+		#remove extra data, special characters, and date() function to prepare for JSON conversion
 		$line =~ s/ms\s*\z//;
 		$line =~ s/^.*{ find/{ find/;
 		$line =~ s/\"([^\" ]* *)+\"/0/g;
 		$line =~ s/\\[^\\]*\\//g;
 		$line =~ s/new Date\(\d*\)/0/g;
 	
+		#split by whitespace to retrieve key and scrub line for additional unwanted characters
 		my @words = split(/\s+/, $line);
 		my $key = $words[1];
 		
@@ -53,30 +62,32 @@ foreach my $line (@lines) {
 			}
 		}
 		
+		#work with only find function
 		if ($line =~ /^.*{ find/) {
-			print FILEOUT "$key,";
-			my $newLine = $cleanedLine;
+			print FILEOUT "$key,";	#placeholder for future expansion to multiple functions
+			my $newLine = $cleanedLine;	#copy to new variable for readability
 			
-			if ($time > $worstTime) {
+			if ($time > $worstTime) {	#keep track of worst offender (highest cost query)
 				$worstTime = $time;
 				$worstOffender = $newLine;
 			}
 			
-			my $myHashEncoded = repair_json($newLine);
-			my $myHashRefDecoded = decode_json($myHashEncoded);
-			my %myHashDecoded = %$myHashRefDecoded;
-	
+			my $myHashEncoded = repair_json($newLine);	#identify JSON from input line and convert to uniform format
+			my $myHashRefDecoded = decode_json($myHashEncoded);	#decode JSON and save to HASH table
+			my %myHashDecoded = %$myHashRefDecoded;		#convert HashRef to Hash for traverse
+			
+			#sort hash to identify query shape and print to output
 			foreach my $key (sort keys %myHashDecoded) {
 				print FILEOUT "$key,";
 			}
-			print FILEOUT "ms: $time\n";
+			print FILEOUT "ms: $time\n";	#print time cost of query
 		}
-		$count++;
+		$count++;	#increment counter ... can be deprecated
 	}
 }
 
 close(FILEOUT);
-print $worstOffender;
+print $worstOffender;	#display worst offender to the console
 
 
 exit 0;
